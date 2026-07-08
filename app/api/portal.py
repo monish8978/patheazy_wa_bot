@@ -13,6 +13,16 @@ from app.chatbot.engine import process_user_message
 router = APIRouter()
 logger = logging.getLogger(__name__)
 
+# Map text or title representations to their specific payload strings
+BUTTON_MAP = {
+    "Book a Lab Test": "FLOW_BOOK_LAB",
+    "Connect to Live Agent": "Connect to Live",
+    "Connect to Live": "Connect to Live",
+    "Home Collection": "BOOK_HOME",
+    "Walk-in Centre": "BOOK_WALKIN",
+    "Main Menu": "MAIN_MENU"
+}
+
 @router.post("/simulate", response_model=ChatBotResponse)
 async def simulate_chat(req: MessageRequest, db: AsyncSession = Depends(get_db)):
     """
@@ -22,11 +32,14 @@ async def simulate_chat(req: MessageRequest, db: AsyncSession = Depends(get_db))
     user_id = req.sessionid
     query_str = req.query.strip()
     
-    # Check if query is actually a payload (e.g. MBOB_REGISTRATION or FLOW_MBOB)
+    # Check if query is actually a payload or a button title mapped to a payload
     payload = None
     message_text = query_str
     
-    if (query_str.isupper() and any(k in query_str for k in ["FLOW_", "BOOK_", "MAIN_MENU"])) or query_str == "Connect to Live":
+    if query_str in BUTTON_MAP:
+        payload = BUTTON_MAP[query_str]
+        message_text = ""
+    elif (query_str.isupper() and any(k in query_str for k in ["FLOW_", "BOOK_", "MAIN_MENU"])):
         payload = query_str
         message_text = ""
 
