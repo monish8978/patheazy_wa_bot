@@ -26,7 +26,7 @@ async def simulate_chat(req: MessageRequest, db: AsyncSession = Depends(get_db))
     payload = None
     message_text = query_str
     
-    if query_str.isupper() and any(k in query_str for k in ["FLOW_", "BOOK_", "MAIN_MENU"]):
+    if (query_str.isupper() and any(k in query_str for k in ["FLOW_", "BOOK_", "MAIN_MENU"])) or query_str == "connect to live":
         payload = query_str
         message_text = ""
 
