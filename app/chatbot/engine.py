@@ -14,7 +14,7 @@ def build_chat_response(text: str, buttons: List[Dict[str, str]] = None) -> Dict
             choices.append({
                 "id": b["payload"],
                 "title": b["title"],
-                "value": b["payload"],
+                "value": b["title"],
                 "payload": b["payload"]
             })
             
