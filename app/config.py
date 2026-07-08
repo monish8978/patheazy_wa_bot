@@ -10,6 +10,7 @@ class Settings(BaseSettings):
     HOST: str = "0.0.0.0"
     PORT: int = 9103
     DEBUG: bool = True
+    LIVE_AGENT_ACTION_ID: str = "9999.5006"
 
 
 

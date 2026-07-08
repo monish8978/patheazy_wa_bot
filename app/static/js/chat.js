@@ -172,15 +172,27 @@ function appendBotResponse(data) {
     let contentHtml = formatMarkdown(botText || data.text || "");
 
     // 2. Render choice buttons inside the message bubble
-    if (choices && choices.length > 0) {
+    if ((choices && choices.length > 0) || (data.actions && data.actions.length > 0)) {
         contentHtml += `<div class="bot-action-buttons">`;
-        choices.forEach(choice => {
-            contentHtml += `
-                <div class="action-btn" onclick="handleActionButton('${choice.title}', '${choice.id}')">
-                    ${choice.title}
-                </div>
-            `;
-        });
+        if (choices && choices.length > 0) {
+            choices.forEach(choice => {
+                contentHtml += `
+                    <div class="action-btn" onclick="handleActionButton('${choice.title}', '${choice.id}')">
+                        ${choice.title}
+                    </div>
+                `;
+            });
+        }
+        if (data.actions && data.actions.length > 0) {
+            data.actions.forEach(action => {
+                const payloadVal = action.value || action.title || "";
+                contentHtml += `
+                    <div class="action-btn" onclick="handleActionButton('${action.title}', '${payloadVal}')">
+                        ${action.title}
+                    </div>
+                `;
+            });
+        }
         contentHtml += `</div>`;
     }
 

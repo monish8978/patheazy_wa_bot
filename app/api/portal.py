@@ -13,14 +13,14 @@ from app.chatbot.engine import process_user_message
 router = APIRouter()
 logger = logging.getLogger(__name__)
 
-# Map text or title representations to their specific payload strings
+# Map text or title representations to their specific payload strings (case-insensitive keys)
 BUTTON_MAP = {
-    "Book a Lab Test": "FLOW_BOOK_LAB",
-    "Connect to Live Agent": "Connect to Live",
-    "Connect to Live": "Connect to Live",
-    "Home Collection": "BOOK_HOME",
-    "Walk-in Centre": "BOOK_WALKIN",
-    "Main Menu": "MAIN_MENU"
+    "book a lab test": "FLOW_BOOK_LAB",
+    "connect to live agent": "Connect to Live",
+    "connect to live": "Connect to Live",
+    "home collection": "BOOK_HOME",
+    "walk-in centre": "BOOK_WALKIN",
+    "main menu": "MAIN_MENU"
 }
 
 @router.post("/simulate", response_model=ChatBotResponse)
@@ -32,12 +32,13 @@ async def simulate_chat(req: MessageRequest, db: AsyncSession = Depends(get_db))
     user_id = req.sessionid
     query_str = req.query.strip()
     
-    # Check if query is actually a payload or a button title mapped to a payload
+    # Check if query is actually a payload or a button title mapped to a payload (case-insensitive)
     payload = None
     message_text = query_str
     
-    if query_str in BUTTON_MAP:
-        payload = BUTTON_MAP[query_str]
+    query_str_lower = query_str.lower()
+    if query_str_lower in BUTTON_MAP:
+        payload = BUTTON_MAP[query_str_lower]
         message_text = ""
     elif (query_str.isupper() and any(k in query_str for k in ["FLOW_", "BOOK_", "MAIN_MENU"])):
         payload = query_str

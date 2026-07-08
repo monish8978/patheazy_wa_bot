@@ -51,6 +51,7 @@ services:
       - .:/workspace
     environment:
       - PORT=${PORT:-9103}
+      - LIVE_AGENT_ACTION_ID=${LIVE_AGENT_ACTION_ID:-9999.5006}
       - DATABASE_URL=mysql+aiomysql://bob_user:bob_password@db:3306/bob_db
       - DATABASE_SYNC_URL=mysql+pymysql://bob_user:bob_password@db:3306/bob_db
       - REDIS_URL=redis://redis:6379/0

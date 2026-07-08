@@ -1,5 +1,6 @@
 import logging
 from typing import Dict, Any, List
+from app.config import settings
 from app.redis_client import redis_manager
 from app.chatbot.flows import MAIN_MENU, BOOK_LAB_MENU
 
@@ -9,18 +10,29 @@ def build_chat_response(text: str, buttons: List[Dict[str, str]] = None) -> Dict
     body_blocks = [{"type": "TextBlock", "text": text}]
     
     choices = []
+    actions = []
     if buttons:
         for b in buttons:
-            # Enforce maximum 24 characters for button titles
             title = b["title"]
             if len(title) > 24:
                 title = title[:24]
-            choices.append({
-                "id": b["payload"],
-                "title": title,
-                "value": title,
-                "payload": b["payload"]
-            })
+                
+            if b["payload"] == "Connect to Live":
+                # Render specifically as Action.Submit inside the root actions array
+                actions.append({
+                    "type": "Action.Submit",
+                    "title": "Connect To Live Agent",
+                    "id": "connectToLiveAgentSubmitForm",
+                    "value": "Connect To Live Agent",
+                    "actionId": settings.LIVE_AGENT_ACTION_ID
+                })
+            else:
+                choices.append({
+                    "id": b["payload"],
+                    "title": title,
+                    "value": title,
+                    "payload": b["payload"]
+                })
             
     if choices:
         body_blocks.append({
@@ -34,7 +46,7 @@ def build_chat_response(text: str, buttons: List[Dict[str, str]] = None) -> Dict
         "type": "adaptiveCard",
         "responseType": "",
         "body": body_blocks,
-        "actions": []
+        "actions": actions
     }
 
 async def process_user_message(user_id: str, text: str, payload: str = None) -> Dict[str, Any]:
