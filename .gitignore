@@ -1,0 +1,25 @@
+# Environment files
+.env
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+
+# Virtual Environment
+venv/
+env/
+
+# Logs
+*.log
+
+# VS Code
+.vscode/
+
+# Docker volumes/data
+postgres_data/
+mysql_data/
+
+# OS files
+.DS_Store
+Thumbs.db

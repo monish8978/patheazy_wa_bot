@@ -1,0 +1,73 @@
+version: '3.8'
+
+services:
+  # 1. Redis Cache & Task Queue Broker
+  redis:
+    image: redis:7-alpine
+    container_name: patheazy_redis
+    ports:
+      - "26379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - patheazy_network
+
+  # 2. Persistent MySQL Database
+  db:
+    image: mysql:8.0
+    container_name: patheazy_mysql
+    ports:
+      - "23306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: root_bob_password
+      MYSQL_DATABASE: bob_db
+      MYSQL_USER: bob_user
+      MYSQL_PASSWORD: bob_password
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./init-db.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "bob_user", "-pbob_password" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - patheazy_network
+
+  # 3. High-Scale FastAPI Backend Server
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: patheazy_web
+    ports:
+      - "9103:9103"
+    environment:
+      - DATABASE_URL=mysql+aiomysql://bob_user:bob_password@db:3306/bob_db
+      - DATABASE_SYNC_URL=mysql+pymysql://bob_user:bob_password@db:3306/bob_db
+      - REDIS_URL=redis://redis:6379/0
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+
+    depends_on:
+      redis:
+        condition: service_healthy
+      db:
+        condition: service_healthy
+    networks:
+      - patheazy_network
+
+
+
+volumes:
+  mysql_data:
+  redis_data:
+
+networks:
+  patheazy_network:
+    driver: bridge

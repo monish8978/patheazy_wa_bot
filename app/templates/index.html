@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Patheazy Labs Chatbot Control Center</title>
+    <!-- Google Fonts for premium typography -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-fontawesome/6.4.0/css/all.min.css">
+    <!-- Custom styling stylesheet -->
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <!-- Top Premium Navigation Bar -->
+    <header class="app-header">
+        <div class="header-logo">
+            <i class="fa-solid fa-building-columns brand-icon"></i>
+            <div>
+                <h1>PATHEAZY LABS</h1>
+                <p>Digital Assistant & CRM Hub</p>
+            </div>
+        </div>
+        
+        <div class="system-status">
+            <div class="status-indicator active" id="db-status">
+                <span class="status-dot"></span>
+                <i class="fa-solid fa-database"></i> MySQL: Active
+            </div>
+            <div class="status-indicator active" id="redis-status">
+                <span class="status-dot"></span>
+                <i class="fa-solid fa-bolt-lightning"></i> Redis: Active
+            </div>
+            <div class="status-indicator active" id="celery-status">
+                <span class="status-dot"></span>
+                <i class="fa-solid fa-gears"></i> Celery: Active
+            </div>
+        </div>
+
+        <button class="btn btn-reset" onclick="resetDeveloperSession()">
+            <i class="fa-solid fa-rotate-left"></i> Reset Session
+        </button>
+    </header>
+
+    <main class="dashboard-grid">
+        <!-- LEFT COLUMN: Mobile Simulator Simulator Widget -->
+        <section class="panel simulator-panel">
+            <div class="panel-header">
+                <h2><i class="fa-solid fa-mobile-screen-button"></i> Messenger Simulator</h2>
+                <span class="badge badge-primary">MOCK PSID: PATHEAZY-USER-99</span>
+            </div>
+            <div class="simulator-wrapper">
+                <div class="phone-frame">
+                    <div class="phone-notch"></div>
+                    <div class="phone-header">
+                        <div class="bot-avatar">
+                            <i class="fa-solid fa-robot"></i>
+                        </div>
+                        <div class="bot-info">
+                            <h3>Patheazy Labs Assistant</h3>
+                            <p><span class="online-indicator"></span> Active Now</p>
+                        </div>
+                    </div>
+                    
+                    <div class="phone-screen">
+                        <div class="chat-area" id="chat-messages">
+                            <!-- Messages get populated dynamically by JavaScript -->
+                        </div>
+                        
+                        <!-- Quick Replies container -->
+                        <div class="quick-replies-container" id="quick-replies">
+                            <!-- Quick Replies populated dynamically -->
+                        </div>
+                        
+                        <!-- Chat Input bar -->
+                        <div class="chat-input-bar">
+                            <input type="text" id="chat-input" placeholder="Type your message..." autocomplete="off" onkeypress="handleEnterKey(event)">
+                            <button class="send-btn" onclick="sendMessage()"><i class="fa-solid fa-paper-plane"></i></button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+
+    </main>
+
+    <!-- Script assets -->
+    <script src="/static/js/chat.js"></script>
+</body>
+</html>
