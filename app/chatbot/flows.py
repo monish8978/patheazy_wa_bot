@@ -5,7 +5,7 @@ MAIN_MENU = {
     "text": "Hello! Welcome to Patheazy Labs\nEasy Path To Quality Diagnostics",
     "buttons": [
         {"title": "Book a Lab Test", "payload": "FLOW_BOOK_LAB"},
-        {"title": "Connect to Live Agent", "payload": "connect to live"}
+        {"title": "Connect to Live Agent", "payload": "Connect to Live"}
     ]
 }
 

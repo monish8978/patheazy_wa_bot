@@ -52,7 +52,7 @@ async def process_user_message(user_id: str, text: str, payload: str = None) -> 
         elif normalized_text == "book a lab test":
             payload = "FLOW_BOOK_LAB"
         elif normalized_text in ["connect with the live agent", "connect to live agent", "live agent", "connect to live"]:
-            payload = "connect to live"
+            payload = "Connect to Live"
 
     # Standard "Main Menu" reset
     if payload == "MAIN_MENU":
@@ -60,7 +60,7 @@ async def process_user_message(user_id: str, text: str, payload: str = None) -> 
         return build_chat_response(text=MAIN_MENU["text"], buttons=MAIN_MENU["buttons"])
 
     # If user pressed connect to agent button
-    if payload in ["FLOW_CONNECT_AGENT", "connect to live"]:
+    if payload == "Connect to Live":
         await redis_manager.clear_session(user_id)
         return build_chat_response(text="Hello,\n\nPlease wait while our customer care\nexecutive will connect to you shortly\n~Team Patheazy")
 
