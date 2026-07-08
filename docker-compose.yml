@@ -46,8 +46,11 @@ services:
       dockerfile: Dockerfile
     container_name: patheazy_web
     ports:
-      - "9103:9103"
+      - "${PORT:-9103}:${PORT:-9103}"
+    volumes:
+      - .:/workspace
     environment:
+      - PORT=${PORT:-9103}
       - DATABASE_URL=mysql+aiomysql://bob_user:bob_password@db:3306/bob_db
       - DATABASE_SYNC_URL=mysql+pymysql://bob_user:bob_password@db:3306/bob_db
       - REDIS_URL=redis://redis:6379/0

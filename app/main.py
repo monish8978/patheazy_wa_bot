@@ -86,3 +86,8 @@ async def health():
     Consolidated health probe endpoint for Kubernetes or load balancer readiness checks.
     """
     return {"status": "HEALTHY", "service": "BOB Bank Chatbot"}
+
+if __name__ == "__main__":
+    import uvicorn
+    logger.info(f"Starting server on {settings.HOST}:{settings.PORT} (reload={settings.DEBUG})")
+    uvicorn.run("app.main:app", host=settings.HOST, port=settings.PORT, reload=settings.DEBUG)

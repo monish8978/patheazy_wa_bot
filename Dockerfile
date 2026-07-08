@@ -20,5 +20,5 @@ COPY . /workspace/
 # Expose port for FastAPI application
 EXPOSE 9103
 
-# Default command to run the FastAPI app (can be overridden for Celery worker role)
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "9103"]
+# Default command to run the FastAPI app (using python runner to read port from env/.env)
+CMD ["python", "-m", "app.main"]
