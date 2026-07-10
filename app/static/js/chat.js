@@ -1,5 +1,5 @@
 // State configuration for simulator client
-const MOCK_USER_ID = "PATHEAZY-USER-99";
+const MOCK_USER_ID = "731779738973688";
 const chatMessages = document.getElementById("chat-messages");
 const chatInput = document.getElementById("chat-input");
 const quickRepliesContainer = document.getElementById("quick-replies");
@@ -23,7 +23,9 @@ async function initializeChat() {
 
         if (logs && logs.length > 0) {
             logs.forEach(log => {
-                appendBubble(log.sender.toLowerCase(), log.message_text, false);
+                if (log.sender.toUpperCase() !== "SYSTEM") {
+                    appendBubble(log.sender.toLowerCase(), log.message_text, false);
+                }
             });
             scrollToBottom();
         } else {
@@ -255,3 +257,4 @@ async function resetDeveloperSession() {
         console.error("Failed to reset session:", e);
     }
 }
+

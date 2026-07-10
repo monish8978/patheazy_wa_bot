@@ -29,7 +29,19 @@ async def simulate_chat(req: MessageRequest, db: AsyncSession = Depends(get_db))
     Simulates sending messages to the chatbot directly from the frontend web widget.
     Persists history to MySQL and updates session states in Redis.
     """
-    user_id = req.sessionid
+    # 1. Resolve session ID: prioritize csid from extraParms, fall back to sessionid
+    user_id = None
+    if req.extraParms:
+        try:
+            import json
+            params = json.loads(req.extraParms)
+            if isinstance(params, dict):
+                user_id = params.get("csid")
+        except Exception:
+            pass
+    if not user_id:
+        user_id = req.sessionid
+
     query_str = req.query.strip()
     
     # Check if query is actually a payload or a button title mapped to a payload (case-insensitive)
@@ -44,7 +56,7 @@ async def simulate_chat(req: MessageRequest, db: AsyncSession = Depends(get_db))
         payload = query_str
         message_text = ""
 
-    logger.info(f"Simulating chat for {user_id} - text: {message_text}, payload: {payload}")
+    logger.info(f"Simulating chat for Session ID: {user_id} - text: {message_text}, payload: {payload}")
 
     # 1. Log incoming user message
     user_log = MessageLog(
@@ -56,7 +68,7 @@ async def simulate_chat(req: MessageRequest, db: AsyncSession = Depends(get_db))
 
     try:
         # 2. Process message via finite state machine
-        bot_reply = await process_user_message(user_id, message_text, payload)
+        bot_reply = await process_user_message(user_id, message_text, payload, csid=user_id)
 
         # 3. Log outgoing bot message
         body_list = bot_reply.get("body", [])

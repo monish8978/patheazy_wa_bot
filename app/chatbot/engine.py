@@ -3,6 +3,9 @@ from typing import Dict, Any, List
 from app.config import settings
 from app.redis_client import redis_manager
 from app.chatbot.flows import MAIN_MENU, BOOK_LAB_MENU
+from app.crm_client import push_lead_to_crm
+from app.database import AsyncSessionLocal
+from app.models import MessageLog
 
 logger = logging.getLogger(__name__)
 
@@ -49,7 +52,32 @@ def build_chat_response(text: str, buttons: List[Dict[str, str]] = None) -> Dict
         "actions": actions
     }
 
-async def process_user_message(user_id: str, text: str, payload: str = None) -> Dict[str, Any]:
+def is_fuzzy_greeting(text: str) -> bool:
+    if not text:
+        return False
+    text = text.lower().strip()
+    
+    # Exact triggers (expanded list)
+    greetings = [
+        "hi", "hello", "hey", "hy", "start", "restart", "hlo", "hii", 
+        "main menu", "menu", "namaste", "namaskar", "yo", "yoo", "gm", 
+        "good morning", "good evening", "heyyy", "hola", "heya", "hye", 
+        "hay", "heyy", "hii", "hiii"
+    ]
+    if text in greetings:
+        return True
+        
+    # Fuzzy matching for spelling mismatches
+    import difflib
+    for g in greetings:
+        if abs(len(text) - len(g)) <= 2:
+            ratio = difflib.SequenceMatcher(None, text, g).ratio()
+            if ratio >= 0.75:
+                return True
+                
+    return False
+
+async def process_user_message(user_id: str, text: str, payload: str = None, csid: str = None) -> Dict[str, Any]:
     session = await redis_manager.get_session(user_id)
     flow = session.get("current_flow")
     step = session.get("current_step")
@@ -59,7 +87,7 @@ async def process_user_message(user_id: str, text: str, payload: str = None) -> 
     # Process payload if text contains common triggers
     if text:
         normalized_text = text.lower().strip()
-        if normalized_text in ["hi", "hello", "main menu", "start"]:
+        if is_fuzzy_greeting(normalized_text):
             payload = "MAIN_MENU"
         elif normalized_text == "book a lab test":
             payload = "FLOW_BOOK_LAB"
@@ -96,42 +124,104 @@ async def process_user_message(user_id: str, text: str, payload: str = None) -> 
         if step == "name":
             if not text or len(text.strip()) < 2:
                 return build_chat_response(text="Invalid name. Please enter a valid Name.")
-            await redis_manager.update_session(user_id, flow="home_collection", step="mobile")
+            await redis_manager.update_session(user_id, flow="home_collection", step="mobile", context_update={"name": text.strip()})
             return build_chat_response(text="Please Enter your\nMobile Number")
         elif step == "mobile":
             if not text or not text.strip().isdigit() or len(text.strip()) < 10:
                 return build_chat_response(text="Invalid number. Please enter a valid Mobile Number.")
-            await redis_manager.update_session(user_id, flow="home_collection", step="gender")
+            await redis_manager.update_session(user_id, flow="home_collection", step="gender", context_update={"mobile": text.strip()})
             return build_chat_response(text="Please Enter your\nGender (e.g., Male, Female, Other)")
         elif step == "gender":
             if not text or text.lower().strip() not in ["male", "m", "female", "f", "other", "o"]:
                 return build_chat_response(text="Invalid input. Please enter a valid Gender (e.g., Male, Female, Other).")
-            await redis_manager.update_session(user_id, flow="home_collection", step="age")
+            await redis_manager.update_session(user_id, flow="home_collection", step="age", context_update={"gender": text.strip()})
             return build_chat_response(text="Please Enter your\nAge")
         elif step == "age":
             if not text or not text.strip().isdigit() or not (0 < int(text.strip()) < 120):
                 return build_chat_response(text="Invalid age. Please enter a valid Age (e.g., 25).")
-            await redis_manager.update_session(user_id, flow="home_collection", step="pincode")
+            await redis_manager.update_session(user_id, flow="home_collection", step="pincode", context_update={"age": text.strip()})
             return build_chat_response(text="Please Enter your\nPincode")
         elif step == "pincode":
             if not text or not text.strip().isdigit() or len(text.strip()) != 6:
                 return build_chat_response(text="Invalid pincode. Please enter a valid 6-digit Pincode.")
-            await redis_manager.update_session(user_id, flow="home_collection", step="address")
+            await redis_manager.update_session(user_id, flow="home_collection", step="address", context_update={"pincode": text.strip()})
             return build_chat_response(text="Please Enter your\naddress")
         elif step == "address":
             if not text or len(text.strip()) < 5:
                 return build_chat_response(text="Invalid address. Please enter a complete address.")
-            await redis_manager.update_session(user_id, flow="home_collection", step="tests")
+            await redis_manager.update_session(user_id, flow="home_collection", step="tests", context_update={"address": text.strip()})
             return build_chat_response(text="Please specify the laboratory tests you wish to book.\n\nKindly list all required test names in a single message. We look forward to assisting you.")
         elif step == "tests":
             if not text or len(text.strip()) < 2:
                 return build_chat_response(text="Invalid test name. Please enter the tests you wish to book.")
-            await redis_manager.update_session(user_id, flow="home_collection", step="date_time")
+            await redis_manager.update_session(user_id, flow="home_collection", step="date_time", context_update={"tests": text.strip()})
             return build_chat_response(text="Please Enter your Preferred Date and Time.\n(For example: DD/MM/YYYY at 10:00 AM)")
         elif step == "date_time":
+            # Extract collected variables
+            ctx = session.get("context", {})
+            full_name = ctx.get("name", "")
+            phone = ctx.get("mobile", "")
+            age = ctx.get("age", "")
+            gender = ctx.get("gender", "")
+            pincode = ctx.get("pincode", "")
+            address = ctx.get("address", "")
+            tests = ctx.get("tests", "")
+            date_time = text.strip()
+
+            remarks = (
+                f"Home Collection Booking - Age: {age}, Gender: {gender}, "
+                f"Pincode: {pincode}, Address: {address}, Tests: {tests}, "
+                f"Preferred Time: {date_time}"
+            )
+            form_data = {
+                "name": full_name,
+                "mobile": phone,
+                "age": age,
+                "gender": gender,
+                "pincode": pincode,
+                "address": address,
+                "tests": tests,
+                "date_time": date_time
+            }
+            # Push lead to C-Zentrix CRM
+            success, response_text = await push_lead_to_crm(
+                full_name=full_name,
+                phone=phone,
+                agent_remarks=remarks,
+                form_data=form_data,
+                csid=csid or user_id
+            )
+
+            # Log CRM response in database message logs
+            try:
+                async with AsyncSessionLocal() as db:
+                    crm_log = MessageLog(
+                        user_id=user_id,
+                        sender="SYSTEM",
+                        message_text=f"[CRM Lead Push Response]\nStatus: {'SUCCESS' if success else 'FAILED'}\nResponse: {response_text}"
+                    )
+                    db.add(crm_log)
+                    await db.commit()
+            except Exception as db_err:
+                logger.error(f"Failed to write CRM log to database: {db_err}")
+
             await redis_manager.clear_session(user_id)
+            if success:
+                response_msg = (
+                    "Thank you for providing your details.\n"
+                    "Your home collection booking has been successfully registered.\n"
+                    "Our Patheazy support team will contact you shortly to confirm your appointment.\n\n"
+                    "Warm regards,\n🤖 Patheazy Labs Virtual Assistant"
+                )
+            else:
+                response_msg = (
+                    "Thank you for providing your details.\n"
+                    "We are experiencing a temporary sync delay. However, our Patheazy support team has received your request and will contact you shortly to confirm your booking details.\n\n"
+                    "Warm regards,\n🤖 Patheazy Labs Virtual Assistant"
+                )
+
             return build_chat_response(
-                text="Thank you for providing your details.\nYour home collection booking has been successfully registered.\nOur Patheazy support team will contact you shortly to confirm your appointment.\n\nWarm regards,\n🤖 Patheazy Labs Virtual Assistant",
+                text=response_msg,
                 buttons=[{"title": "Main Menu", "payload": "MAIN_MENU"}]
             )
 
@@ -139,24 +229,75 @@ async def process_user_message(user_id: str, text: str, payload: str = None) -> 
         if step == "name":
             if not text or len(text.strip()) < 2:
                 return build_chat_response(text="Invalid name. Please enter a valid Name.")
-            await redis_manager.update_session(user_id, flow="walk_in", step="mobile")
+            await redis_manager.update_session(user_id, flow="walk_in", step="mobile", context_update={"name": text.strip()})
             return build_chat_response(text="Please Enter your\nMobile Number")
         elif step == "mobile":
             if not text or not text.strip().isdigit() or len(text.strip()) < 10:
                 return build_chat_response(text="Invalid number. Please enter a valid Mobile Number.")
-            await redis_manager.update_session(user_id, flow="walk_in", step="gender")
+            await redis_manager.update_session(user_id, flow="walk_in", step="gender", context_update={"mobile": text.strip()})
             return build_chat_response(text="Please Enter your\nGender (e.g., Male, Female, Other)")
         elif step == "gender":
             if not text or text.lower().strip() not in ["male", "m", "female", "f", "other", "o"]:
                 return build_chat_response(text="Invalid input. Please enter a valid Gender (e.g., Male, Female, Other).")
-            await redis_manager.update_session(user_id, flow="walk_in", step="age")
+            await redis_manager.update_session(user_id, flow="walk_in", step="age", context_update={"gender": text.strip()})
             return build_chat_response(text="Please Enter your\nAge")
         elif step == "age":
             if not text or not text.strip().isdigit() or not (0 < int(text.strip()) < 120):
                 return build_chat_response(text="Invalid age. Please enter a valid Age (e.g., 25).")
+
+            # Extract collected variables
+            ctx = session.get("context", {})
+            full_name = ctx.get("name", "")
+            phone = ctx.get("mobile", "")
+            gender = ctx.get("gender", "")
+            age = text.strip()
+
+            remarks = f"Walk-in Centre Booking - Age: {age}, Gender: {gender}"
+            form_data = {
+                "name": full_name,
+                "mobile": phone,
+                "gender": gender,
+                "age": age
+            }
+            # Push lead to C-Zentrix CRM
+            success, response_text = await push_lead_to_crm(
+                full_name=full_name,
+                phone=phone,
+                agent_remarks=remarks,
+                form_data=form_data,
+                csid=csid or user_id
+            )
+
+            # Log CRM response in database message logs
+            try:
+                async with AsyncSessionLocal() as db:
+                    crm_log = MessageLog(
+                        user_id=user_id,
+                        sender="SYSTEM",
+                        message_text=f"[CRM Lead Push Response]\nStatus: {'SUCCESS' if success else 'FAILED'}\nResponse: {response_text}"
+                    )
+                    db.add(crm_log)
+                    await db.commit()
+            except Exception as db_err:
+                logger.error(f"Failed to write CRM log to database: {db_err}")
+
             await redis_manager.clear_session(user_id)
+            if success:
+                response_msg = (
+                    "Thank you for providing your details.\n"
+                    "Your walk-in appointment has been successfully registered.\n"
+                    "Our customer care executive will reach out to you shortly to confirm the center details.\n\n"
+                    "Warm regards,\n🤖 Patheazy Labs Virtual Assistant"
+                )
+            else:
+                response_msg = (
+                    "Thank you for providing your details.\n"
+                    "We are experiencing a temporary sync delay. However, our customer care executive has received your request and will reach out to you shortly to confirm the center details.\n\n"
+                    "Warm regards,\n🤖 Patheazy Labs Virtual Assistant"
+                )
+
             return build_chat_response(
-                text="Thank you for providing your details.\nYour walk-in appointment has been successfully registered.\nOur customer care executive will reach out to you shortly to confirm the center details.\n\nWarm regards,\n🤖 Patheazy Labs Virtual Assistant",
+                text=response_msg,
                 buttons=[{"title": "Main Menu", "payload": "MAIN_MENU"}]
             )
 

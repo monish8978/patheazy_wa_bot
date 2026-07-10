@@ -12,7 +12,10 @@ class Settings(BaseSettings):
     DEBUG: bool = True
     LIVE_AGENT_ACTION_ID: str = "9999.5006"
 
-
+    # CRM Settings
+    CRM_CLIENT_ID: str = "OAqnjdBKVy0TXy2AZoKjkIPIhsOACGg7MWcffQjNVy0"
+    CRM_AUTH_TOKEN: str = "xLncDlwuzwzGNHo"
+    CRM_API_URL: str = "https://crm.c-zentrix.com/CZCRM/api/AddLeadapi.php"
 
     class Config:
         env_file = ".env"
