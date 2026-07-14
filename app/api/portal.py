@@ -16,8 +16,10 @@ logger = logging.getLogger(__name__)
 # Map text or title representations to their specific payload strings (case-insensitive keys)
 BUTTON_MAP = {
     "book a lab test": "FLOW_BOOK_LAB",
-    "connect to live agent": "Connect to Live",
-    "connect to live": "Connect to Live",
+    "connect with live agent": "FLOW_LIVE_AGENT",
+    "connect to agent": "FLOW_LIVE_AGENT",
+    "connect to live agent": "FLOW_LIVE_AGENT",
+    "connect to live": "FLOW_LIVE_AGENT",
     "home collection": "BOOK_HOME",
     "walk-in centre": "BOOK_WALKIN",
     "main menu": "MAIN_MENU"

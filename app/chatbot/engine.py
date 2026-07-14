@@ -20,7 +20,21 @@ def build_chat_response(text: str, buttons: List[Dict[str, str]] = None) -> Dict
             if len(title) > 24:
                 title = title[:24]
                 
-            if b["payload"] == "Connect to Live":
+            if b["payload"] == "FLOW_LIVE_AGENT":
+                choices.append({
+                    "id": "FLOW_LIVE_AGENT",
+                    "title": title,
+                    "value": "Connect To Agent",
+                    "payload": "FLOW_LIVE_AGENT"
+                })
+                actions.append({
+                    "type": "Action.Submit",
+                    "title": "Connect To Live Agent",
+                    "id": "connectToLiveAgentSubmitForm",
+                    "value": "Connect To Live Agent",
+                    "actionId": settings.LIVE_AGENT_ACTION_ID
+                })
+            elif b["payload"] == "Connect to Live":
                 # Render specifically as Action.Submit inside the root actions array
                 actions.append({
                     "type": "Action.Submit",
@@ -91,8 +105,8 @@ async def process_user_message(user_id: str, text: str, payload: str = None, csi
             payload = "MAIN_MENU"
         elif normalized_text == "book a lab test":
             payload = "FLOW_BOOK_LAB"
-        elif normalized_text in ["connect with the live agent", "connect to live agent", "live agent", "connect to live"]:
-            payload = "Connect to Live"
+        elif normalized_text in ["connect with the live agent", "connect to live agent", "live agent", "connect to live", "connect to agent", "connect with live agent"]:
+            payload = "FLOW_LIVE_AGENT"
 
     # Standard "Main Menu" reset
     if payload == "MAIN_MENU":
@@ -100,7 +114,7 @@ async def process_user_message(user_id: str, text: str, payload: str = None, csi
         return build_chat_response(text=MAIN_MENU["text"], buttons=MAIN_MENU["buttons"])
 
     # If user pressed connect to agent button
-    if payload == "Connect to Live":
+    if payload in ["Connect to Live", "FLOW_LIVE_AGENT"]:
         await redis_manager.clear_session(user_id)
         return build_chat_response(text="Hello,\n\nPlease wait while our customer care\nexecutive will connect to you shortly\n~Team Patheazy")
 
