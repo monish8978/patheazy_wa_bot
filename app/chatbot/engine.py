@@ -164,7 +164,7 @@ async def process_user_message(user_id: str, text: str, payload: str = None, csi
             payload = "MAIN_MENU"
         elif normalized_text == "book a lab test":
             payload = "FLOW_BOOK_LAB"
-        elif normalized_text in ["connect with the live agent", "connect to live agent", "live agent", "connect to live", "connect to agent", "connect with live agent"]:
+        elif normalized_text in ["connect with the live agent", "connect to live agent", "live agent", "connect to live", "connect to agent", "Connect To Live"]:
             payload = "FLOW_LIVE_AGENT"
 
     # Standard "Main Menu" reset
