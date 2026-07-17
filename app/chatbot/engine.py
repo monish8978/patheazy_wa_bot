@@ -7,7 +7,44 @@ from app.crm_client import push_lead_to_crm
 from app.database import AsyncSessionLocal
 from app.models import MessageLog
 
+import re
+
 logger = logging.getLogger(__name__)
+
+def is_valid_name(name: str) -> bool:
+    if not name:
+        return False
+    # Ensure name contains only alphabets and spaces, and is at least 2 characters long
+    return bool(re.match(r"^[a-zA-Z\s]{2,}$", name.strip()))
+
+def is_valid_date_time(dt_str: str) -> bool:
+    if not dt_str:
+        return False
+    dt_str = dt_str.strip()
+    # Pattern to match: DD/MM/YYYY at HH:MM AM/PM
+    match = re.match(
+        r"^(\d{1,2})/(\d{1,2})/(\d{4})\s+at\s+(\d{1,2}):(\d{2})\s*(AM|PM|am|pm)$", 
+        dt_str, 
+        re.IGNORECASE
+    )
+    if not match:
+        return False
+    
+    day, month, year, hour, minute, ampm = match.groups()
+    day, month, year = int(day), int(month), int(year)
+    hour, minute = int(hour), int(minute)
+    
+    # Range validation
+    if not (1 <= month <= 12) or not (1 <= day <= 31) or not (1 <= hour <= 12) or not (0 <= minute <= 59):
+        return False
+        
+    import datetime
+    try:
+        datetime.date(year, month, day)
+    except ValueError:
+        return False
+        
+    return True
 
 def build_chat_response(text: str, buttons: List[Dict[str, str]] = None) -> Dict[str, Any]:
     body_blocks = [{"type": "TextBlock", "text": text}]
@@ -136,12 +173,12 @@ async def process_user_message(user_id: str, text: str, payload: str = None, csi
 
     elif flow == "home_collection":
         if step == "name":
-            if not text or len(text.strip()) < 2:
-                return build_chat_response(text="Invalid name. Please enter a valid Name.")
+            if not text or not is_valid_name(text):
+                return build_chat_response(text="Invalid name. Please enter a valid Name (letters and spaces only, no numbers or special characters).")
             await redis_manager.update_session(user_id, flow="home_collection", step="mobile", context_update={"name": text.strip()})
             return build_chat_response(text="Please Enter your\nMobile Number")
         elif step == "mobile":
-            if not text or not text.strip().isdigit() or len(text.strip()) < 10:
+            if not text or not text.strip().isdigit() or not (10 <= len(text.strip()) <= 15):
                 return build_chat_response(text="Invalid number. Please enter a valid Mobile Number.")
             await redis_manager.update_session(user_id, flow="home_collection", step="gender", context_update={"mobile": text.strip()})
             return build_chat_response(text="Please Enter your\nGender (e.g., Male, Female, Other)")
@@ -157,7 +194,7 @@ async def process_user_message(user_id: str, text: str, payload: str = None, csi
             return build_chat_response(text="Please Enter your\nPincode")
         elif step == "pincode":
             if not text or not text.strip().isdigit() or len(text.strip()) != 6:
-                return build_chat_response(text="Invalid pincode. Please enter a valid 6-digit Pincode.")
+                return build_chat_response(text="Invalid pincode. Please enter a valid 6-digit Pincode (numbers only).")
             await redis_manager.update_session(user_id, flow="home_collection", step="address", context_update={"pincode": text.strip()})
             return build_chat_response(text="Please Enter your\naddress")
         elif step == "address":
@@ -171,6 +208,8 @@ async def process_user_message(user_id: str, text: str, payload: str = None, csi
             await redis_manager.update_session(user_id, flow="home_collection", step="date_time", context_update={"tests": text.strip()})
             return build_chat_response(text="Please Enter your Preferred Date and Time.\n(For example: DD/MM/YYYY at 10:00 AM)")
         elif step == "date_time":
+            if not text or not is_valid_date_time(text):
+                return build_chat_response(text="Invalid format. Please enter date and time in the correct format:\nDD/MM/YYYY at HH:MM AM/PM\n(For example: 17/07/2026 at 10:00 AM)")
             # Extract collected variables
             ctx = session.get("context", {})
             full_name = ctx.get("name", "")
@@ -241,12 +280,12 @@ async def process_user_message(user_id: str, text: str, payload: str = None, csi
 
     elif flow == "walk_in":
         if step == "name":
-            if not text or len(text.strip()) < 2:
-                return build_chat_response(text="Invalid name. Please enter a valid Name.")
+            if not text or not is_valid_name(text):
+                return build_chat_response(text="Invalid name. Please enter a valid Name (letters and spaces only, no numbers or special characters).")
             await redis_manager.update_session(user_id, flow="walk_in", step="mobile", context_update={"name": text.strip()})
             return build_chat_response(text="Please Enter your\nMobile Number")
         elif step == "mobile":
-            if not text or not text.strip().isdigit() or len(text.strip()) < 10:
+            if not text or not text.strip().isdigit() or not (10 <= len(text.strip()) <= 15):
                 return build_chat_response(text="Invalid number. Please enter a valid Mobile Number.")
             await redis_manager.update_session(user_id, flow="walk_in", step="gender", context_update={"mobile": text.strip()})
             return build_chat_response(text="Please Enter your\nGender (e.g., Male, Female, Other)")
