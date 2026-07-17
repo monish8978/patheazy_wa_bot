@@ -4,7 +4,7 @@ from typing import List, Optional, Dict, Any
 class MessageRequest(BaseModel):
     query: str = Field(..., description="Plain text user message or button payload identifier")
     app_id: Optional[str] = Field("1212", description="App application identifier")
-    sessionid: str = Field(..., description="Unique chat session identifier")
+    sessionid: Optional[str] = Field(None, description="Unique chat session identifier")
     clientId: Optional[int] = Field(205, description="Client account identifier")
     botId: Optional[int] = Field(1212, description="Chat bot identifier")
     extraParms: Optional[str] = Field(None, description="Serialized JSON or string of extra parameters")

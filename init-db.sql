@@ -1,6 +1,8 @@
--- Initialize Database for BOB Bank Chatbot
-CREATE DATABASE IF NOT EXISTS bob_db;
-USE bob_db;
+-- Initialize Database for Patheazy Chatbot
+CREATE DATABASE IF NOT EXISTS patheazy_db;
+GRANT ALL PRIVILEGES ON patheazy_db.* TO 'bob_user'@'%';
+FLUSH PRIVILEGES;
+USE patheazy_db;
 
 
 

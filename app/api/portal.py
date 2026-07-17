@@ -26,6 +26,7 @@ BUTTON_MAP = {
 }
 
 @router.post("/simulate", response_model=ChatBotResponse)
+@router.post("/patheazy", response_model=ChatBotResponse)
 async def simulate_chat(req: MessageRequest, db: AsyncSession = Depends(get_db)):
     """
     Simulates sending messages to the chatbot directly from the frontend web widget.
@@ -43,6 +44,9 @@ async def simulate_chat(req: MessageRequest, db: AsyncSession = Depends(get_db))
             pass
     if not user_id:
         user_id = req.sessionid
+
+    if not user_id:
+        raise HTTPException(status_code=400, detail="sessionid or csid in extraParms must be provided")
 
     query_str = req.query.strip()
     

@@ -45,8 +45,8 @@ Ensure standard MySQL and Redis services are active locally.
 ### 2. Configure Environment Variables
 Create a `.env` file in the root directory (based on `.env.example`):
 ```ini
-DATABASE_URL=mysql+aiomysql://bob_user:bob_password@localhost:3306/bob_db
-DATABASE_SYNC_URL=mysql+pymysql://bob_user:bob_password@localhost:3306/bob_db
+DATABASE_URL=mysql+aiomysql://bob_user:bob_password@localhost:3306/patheazy_db
+DATABASE_SYNC_URL=mysql+pymysql://bob_user:bob_password@localhost:3306/patheazy_db
 REDIS_URL=redis://localhost:6379/0
 ```
 
@@ -78,14 +78,15 @@ The chatbot implements Patheazy Labs' digital assistant flows:
 You can interact with the chatbot engine, retrieve logs, and reset sessions using the following endpoints:
 
 ### 1. Process Dialogue / Dialogue Simulator
-This endpoint simulates sending user messages or button clicks to the state machine engine:
+This endpoint processes messages or button clicks. You can invoke it using `/api/patheazy`:
 
 ```bash
-curl -X POST "http://localhost:9103/api/simulate" \
+curl -X POST "http://localhost:9103/api/patheazy" \
      -H "Content-Type: application/json" \
      -d '{
-       "sessionid": "PATHEAZY-USER-99",
-       "query": "FLOW_BOOK_LAB"
+       "query": "Hi",
+       "app_id": "3333",
+       "extraParms": "{\"source\":\"webchat\",\"csid\":\"2591783598124128\",\"identifier\":\"919765785790\"}"
      }'
 ```
 

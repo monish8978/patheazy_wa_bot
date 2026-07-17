@@ -25,7 +25,7 @@ services:
       - "23316:3306"
     environment:
       MYSQL_ROOT_PASSWORD: root_bob_password
-      MYSQL_DATABASE: bob_db
+      MYSQL_DATABASE: patheazy_db
       MYSQL_USER: bob_user
       MYSQL_PASSWORD: bob_password
     volumes:
@@ -52,8 +52,8 @@ services:
     environment:
       - PORT=${PORT:-9103}
       - LIVE_AGENT_ACTION_ID=${LIVE_AGENT_ACTION_ID:-9999.5006}
-      - DATABASE_URL=mysql+aiomysql://bob_user:bob_password@db:3306/bob_db
-      - DATABASE_SYNC_URL=mysql+pymysql://bob_user:bob_password@db:3306/bob_db
+      - DATABASE_URL=mysql+aiomysql://bob_user:bob_password@db:3306/patheazy_db
+      - DATABASE_SYNC_URL=mysql+pymysql://bob_user:bob_password@db:3306/patheazy_db
       - REDIS_URL=redis://redis:6379/0
       - CELERY_BROKER_URL=redis://redis:6379/0
       - CELERY_RESULT_BACKEND=redis://redis:6379/0
