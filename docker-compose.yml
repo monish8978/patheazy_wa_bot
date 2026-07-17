@@ -57,6 +57,8 @@ services:
       - REDIS_URL=redis://redis:6379/0
       - CELERY_BROKER_URL=redis://redis:6379/0
       - CELERY_RESULT_BACKEND=redis://redis:6379/0
+      - LOG_FILE_NAME=${LOG_FILE_NAME:-patheazy.log}
+      - LOG_FILE_PATH=${LOG_FILE_PATH:-/var/log/czentrix}
 
     depends_on:
       redis:

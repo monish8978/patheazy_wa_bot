@@ -9,11 +9,27 @@ from app.config import settings
 from app.database import engine, Base
 from app.redis_client import redis_manager
 from app.api.portal import router as portal_router
+import os
 
-# Configure structured logging
+# Configure structured logging to file and stdout
+log_dir = settings.LOG_FILE_PATH
+log_file = os.path.join(log_dir, settings.LOG_FILE_NAME)
+
+try:
+    os.makedirs(log_dir, exist_ok=True)
+except Exception:
+    # Fallback to local logs directory if path creation fails
+    log_dir = "logs"
+    os.makedirs(log_dir, exist_ok=True)
+    log_file = os.path.join(log_dir, settings.LOG_FILE_NAME)
+
 logging.basicConfig(
     level=logging.INFO,
-    format="%(asctime)s - %(levelname)s - %(name)s - %(message)s"
+    format="%(asctime)s - %(levelname)s - %(name)s - %(message)s",
+    handlers=[
+        logging.FileHandler(log_file),
+        logging.StreamHandler()
+    ]
 )
 logger = logging.getLogger(__name__)
 

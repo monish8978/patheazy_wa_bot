@@ -17,6 +17,10 @@ class Settings(BaseSettings):
     CRM_AUTH_TOKEN: str = "xLncDlwuzwzGNHo"
     CRM_API_URL: str = "https://crm.c-zentrix.com/CZCRM/api/AddLeadapi.php"
 
+    # Logging Settings
+    LOG_FILE_NAME: str = "patheazy.log"
+    LOG_FILE_PATH: str = "/var/log/czentrix"
+
     class Config:
         env_file = ".env"
         extra = "ignore"
