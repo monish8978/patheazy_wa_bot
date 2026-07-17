@@ -1,5 +1,5 @@
 // State configuration for simulator client
-const MOCK_USER_ID = "731779738973688";
+const MOCK_USER_ID = "731779738973088";
 const chatMessages = document.getElementById("chat-messages");
 const chatInput = document.getElementById("chat-input");
 const quickRepliesContainer = document.getElementById("quick-replies");
@@ -98,7 +98,7 @@ async function submitMessage(message, payload) {
                 sessionid: MOCK_USER_ID,
                 clientId: 208,
                 botId: 1212,
-                extraParms: JSON.stringify({ source: "webchat", csid: "731779738973688" })
+                extraParms: JSON.stringify({ source: "webchat", csid: "731779738973088" })
             })
         });
 

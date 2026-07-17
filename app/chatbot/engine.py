@@ -135,6 +135,28 @@ async def process_user_message(user_id: str, text: str, payload: str = None, csi
 
     logger.info(f"User {user_id} - Flow: {flow}, Step: {step}, Payload: {payload}, Text: {text}")
 
+    # Determine if user is new (has no previous message logs in MySQL)
+    from app.database import AsyncSessionLocal
+    from app.models import MessageLog
+    from sqlalchemy import select
+    
+    is_new_user = True
+    try:
+        async with AsyncSessionLocal() as db:
+            result = await db.execute(
+                select(MessageLog).filter(MessageLog.user_id == user_id).limit(1)
+            )
+            if result.scalar() is not None:
+                is_new_user = False
+    except Exception as e:
+        logger.error(f"Error checking if user is new: {e}")
+
+    # Build dynamic main menu text
+    if is_new_user:
+        main_menu_text = "Hello! Patheazy Labs\nEasy Path To Quality Diagnostics"
+    else:
+        main_menu_text = "Hello! Welcome to Patheazy Labs\nEasy Path To Quality Diagnostics"
+
     # Process payload if text contains common triggers
     if text:
         normalized_text = text.lower().strip()
@@ -148,7 +170,7 @@ async def process_user_message(user_id: str, text: str, payload: str = None, csi
     # Standard "Main Menu" reset
     if payload == "MAIN_MENU":
         await redis_manager.clear_session(user_id)
-        return build_chat_response(text=MAIN_MENU["text"], buttons=MAIN_MENU["buttons"])
+        return build_chat_response(text=main_menu_text, buttons=MAIN_MENU["buttons"])
 
     # If user pressed connect to agent button
     if payload in ["Connect to Live", "FLOW_LIVE_AGENT"]:
@@ -356,4 +378,4 @@ async def process_user_message(user_id: str, text: str, payload: str = None, csi
 
     # Default fallback
     await redis_manager.clear_session(user_id)
-    return build_chat_response(text=MAIN_MENU["text"], buttons=MAIN_MENU["buttons"])
+    return build_chat_response(text=main_menu_text, buttons=MAIN_MENU["buttons"])
