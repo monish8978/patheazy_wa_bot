@@ -1,6 +1,6 @@
-// Get csid from URL query parameters (e.g. ?csid=731779738973088), otherwise fallback to default
 const urlParams = new URLSearchParams(window.location.search);
 const MOCK_USER_ID = urlParams.get('csid') || urlParams.get('sessionid') || "731779738973088";
+const MOCK_IDENTIFIER = urlParams.get('identifier') || "919765785790";
 const chatMessages = document.getElementById("chat-messages");
 const chatInput = document.getElementById("chat-input");
 const quickRepliesContainer = document.getElementById("quick-replies");
@@ -104,7 +104,7 @@ async function submitMessage(message, payload) {
                 sessionid: MOCK_USER_ID,
                 clientId: 208,
                 botId: 1212,
-                extraParms: JSON.stringify({ source: "webchat", csid: MOCK_USER_ID })
+                extraParms: JSON.stringify({ source: "webchat", csid: MOCK_USER_ID, identifier: MOCK_IDENTIFIER })
             })
         });
 

@@ -128,7 +128,10 @@ def is_fuzzy_greeting(text: str) -> bool:
                 
     return False
 
-async def process_user_message(user_id: str, text: str, payload: str = None, csid: str = None) -> Dict[str, Any]:
+async def process_user_message(user_id: str, text: str, payload: str = None, csid: str = None, identifier: str = None) -> Dict[str, Any]:
+    if identifier:
+        await redis_manager.update_session(user_id, context_update={"identifier": identifier})
+
     session = await redis_manager.get_session(user_id)
     flow = session.get("current_flow")
     step = session.get("current_step")
@@ -197,12 +200,7 @@ async def process_user_message(user_id: str, text: str, payload: str = None, csi
         if step == "name":
             if not text or not is_valid_name(text):
                 return build_chat_response(text="Invalid name. Please enter a valid Name (letters and spaces only, no numbers or special characters).")
-            await redis_manager.update_session(user_id, flow="home_collection", step="mobile", context_update={"name": text.strip()})
-            return build_chat_response(text="Please Enter your\nMobile Number")
-        elif step == "mobile":
-            if not text or not text.strip().isdigit() or not (10 <= len(text.strip()) <= 15):
-                return build_chat_response(text="Invalid number. Please enter a valid Mobile Number.")
-            await redis_manager.update_session(user_id, flow="home_collection", step="gender", context_update={"mobile": text.strip()})
+            await redis_manager.update_session(user_id, flow="home_collection", step="gender", context_update={"name": text.strip()})
             return build_chat_response(text="Please Enter your\nGender (e.g., Male, Female, Other)")
         elif step == "gender":
             if not text or text.lower().strip() not in ["male", "m", "female", "f", "other", "o"]:
@@ -235,7 +233,7 @@ async def process_user_message(user_id: str, text: str, payload: str = None, csi
             # Extract collected variables
             ctx = session.get("context", {})
             full_name = ctx.get("name", "")
-            phone = ctx.get("mobile", "")
+            phone = ctx.get("identifier") or identifier or user_id or ""
             age = ctx.get("age", "")
             gender = ctx.get("gender", "")
             pincode = ctx.get("pincode", "")
@@ -304,12 +302,7 @@ async def process_user_message(user_id: str, text: str, payload: str = None, csi
         if step == "name":
             if not text or not is_valid_name(text):
                 return build_chat_response(text="Invalid name. Please enter a valid Name (letters and spaces only, no numbers or special characters).")
-            await redis_manager.update_session(user_id, flow="walk_in", step="mobile", context_update={"name": text.strip()})
-            return build_chat_response(text="Please Enter your\nMobile Number")
-        elif step == "mobile":
-            if not text or not text.strip().isdigit() or not (10 <= len(text.strip()) <= 15):
-                return build_chat_response(text="Invalid number. Please enter a valid Mobile Number.")
-            await redis_manager.update_session(user_id, flow="walk_in", step="gender", context_update={"mobile": text.strip()})
+            await redis_manager.update_session(user_id, flow="walk_in", step="gender", context_update={"name": text.strip()})
             return build_chat_response(text="Please Enter your\nGender (e.g., Male, Female, Other)")
         elif step == "gender":
             if not text or text.lower().strip() not in ["male", "m", "female", "f", "other", "o"]:
@@ -323,7 +316,7 @@ async def process_user_message(user_id: str, text: str, payload: str = None, csi
             # Extract collected variables
             ctx = session.get("context", {})
             full_name = ctx.get("name", "")
-            phone = ctx.get("mobile", "")
+            phone = ctx.get("identifier") or identifier or user_id or ""
             gender = ctx.get("gender", "")
             age = text.strip()
 

@@ -32,18 +32,22 @@ async def simulate_chat(req: MessageRequest, db: AsyncSession = Depends(get_db))
     Simulates sending messages to the chatbot directly from the frontend web widget.
     Persists history to MySQL and updates session states in Redis.
     """
-    # 1. Resolve session ID: prioritize csid from extraParms, fall back to sessionid
+    # 1. Resolve session ID and user identifier: prioritize csid & identifier from extraParms
     user_id = None
+    identifier = None
     if req.extraParms:
         try:
             import json
             params = json.loads(req.extraParms)
             if isinstance(params, dict):
                 user_id = params.get("csid")
+                identifier = params.get("identifier")
         except Exception:
             pass
     if not user_id:
         user_id = req.sessionid
+    if not identifier:
+        identifier = user_id or req.sessionid
 
     if not user_id:
         raise HTTPException(status_code=400, detail="sessionid or csid in extraParms must be provided")
@@ -62,7 +66,7 @@ async def simulate_chat(req: MessageRequest, db: AsyncSession = Depends(get_db))
         payload = query_str
         message_text = ""
 
-    logger.info(f"Simulating chat for Session ID: {user_id} - text: {message_text}, payload: {payload}")
+    logger.info(f"Simulating chat for Session ID: {user_id}, Identifier: {identifier} - text: {message_text}, payload: {payload}")
 
     # 1. Log incoming user message
     user_log = MessageLog(
@@ -74,7 +78,8 @@ async def simulate_chat(req: MessageRequest, db: AsyncSession = Depends(get_db))
 
     try:
         # 2. Process message via finite state machine
-        bot_reply = await process_user_message(user_id, message_text, payload, csid=user_id)
+        bot_reply = await process_user_message(user_id, message_text, payload, csid=user_id, identifier=identifier)
+        logger.info(f"[FINAL CHAT RESPONSE] User ID: {user_id} - Response: {bot_reply}")
 
         # 3. Log outgoing bot message
         body_list = bot_reply.get("body", [])

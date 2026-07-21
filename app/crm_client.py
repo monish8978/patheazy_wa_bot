@@ -22,7 +22,8 @@ async def push_lead_to_crm(full_name: str, phone: str, agent_remarks: str, form_
         "country_name": "",
         "state_name": "",
         "city_name": "",
-        "lead_source_name": "",
+        "source": "whatsapp",
+        "lead_source_name": "whatsapp",
         "product_type_name": "",
         "disposition_name": "",
         "sub_disposition_name": "",
@@ -64,16 +65,15 @@ async def push_lead_to_crm(full_name: str, phone: str, agent_remarks: str, form_
         if csid:
             params["csid"] = csid
         
-        logger.info(f"Sending lead to CRM: Name={first_name} {last_name}, Phone={phone}")
+        logger.info(f"Sending lead to CRM: Name={first_name} {last_name}, Phone={phone}, Data={data_dict}")
         
         async with aiohttp.ClientSession() as session:
             async with session.get(settings.CRM_API_URL, params=params) as response:
                 response_text = await response.text()
+                logger.info(f"[CRM API FINAL RESPONSE] HTTP Status: {response.status}, Response: {response_text}")
                 if response.status == 200:
-                    logger.info(f"Successfully pushed lead to CRM. Response: {response_text}")
                     return True, response_text
                 else:
-                    logger.error(f"Failed to push lead to CRM. HTTP Status: {response.status}, Response: {response_text}")
                     return False, f"HTTP {response.status}: {response_text}"
     except Exception as e:
         logger.error(f"Exception while pushing lead to CRM: {e}")
