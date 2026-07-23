@@ -39,6 +39,8 @@ async def push_lead_to_crm(full_name: str, phone: str, agent_remarks: str, form_
     }
 
     if form_data:
+        data_dict["disposition_name"] = form_data.get("disposition_name", "")
+        data_dict["sub_disposition_name"] = form_data.get("sub_disposition_name", "")
         data_dict["person_info_customized_gender"] = form_data.get("gender", "")
         data_dict["person_info_customized_age"] = form_data.get("age", "")
         data_dict["person_info_customized_pincode"] = form_data.get("pincode", "")
